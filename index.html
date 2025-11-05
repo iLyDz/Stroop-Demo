@@ -106,14 +106,14 @@
       nextTrial();
     }
 
-    function sendToQualtrics() {
-      document.getElementById('task').classList.add('hidden');
-      document.getElementById('thanks').classList.remove('hidden');
+  function sendToQualtrics() {
+  document.getElementById('task').classList.add('hidden');
+  document.getElementById('thanks').classList.remove('hidden');
 
-      // Send data back to Qualtrics via postMessage
-      const jsonData = JSON.stringify(results);
-      window.parent.postMessage(jsonData, "*");
-    }
+  // Tag the message so Qualtrics can detect it
+  const jsonData = JSON.stringify({ type: "stroopData", payload: results });
+  window.parent.postMessage(jsonData, "*");
+}
 
     document.addEventListener('keydown', e => {
       submitAnswer(e.key.toLowerCase());
