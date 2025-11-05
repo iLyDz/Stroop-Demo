@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stroop Task - Local CSV</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding-top: 100px; background: #f0f0f0; }
+    #word { font-size: 60px; margin-bottom: 40px; }
+    .hidden { display: none; }
+    input, button { font-size: 18px; padding: 10px; margin: 10px; }
+  </style>
+</head>
+<body>
+
+  <div id="setup">
+    <h2>Short Stroop Task</h2>
+    <p>Enter your Participant ID:</p>
+    <input type="text" id="participantID" placeholder="e.g. P001">
+    <br>
+    <button onclick="startTask()">Start Task</button>
+  </div>
+
+  <div id="task" class="hidden">
+    <div id="word">+</div>
+  </div>
+
+  <div id="thanks" class="hidden">
+    <h2>Thank you!</h2>
+    <p>Your responses have been downloaded as a CSV file.</p>
+  </div>
+
+  <script>
+    const colors = ['red', 'green', 'blue', 'yellow'];
+    const colorKeys = { 'r': 'red', 'g': 'green', 'b': 'blue', 'y': 'yellow' };
+
+    let trials = [];
+    let current = 0;
+    let startTime;
+    let results = [];
+    let awaitingResponse = false;
+    let participantID = '';
+
+    function startTask() {
+      participantID = document.getElementById('participantID').value.trim();
+      if (!participantID) {
+        alert("Please enter a Participant ID.");
+        return;
+      }
+      document.getElementById('setup').classList.add('hidden');
+      document.getElementById('task').classList.remove('hidden');
+      trials = generateTrials(6);
+      results = [];
+      nextTrial();
+    }
+
+    function generateTrials(n) {
+      let arr = [];
+      for (let i = 0; i < n; i++) {
+        const word = colors[Math.floor(Math.random() * colors.length)];
+        let ink;
+        do {
+          ink = colors[Math.floor(Math.random() * colors.length)];
+        } while (ink === word);
+        arr.push({ word, ink });
+      }
+      return arr;
+    }
+
+    function nextTrial() {
+      if (current >= trials.length) {
+        downloadCSV();
+        return;
+      }
+      const stim = trials[current];
+      const wordDiv = document.getElementById('word');
+      wordDiv.textContent = '+';
+      wordDiv.style.color = 'black';
+
+      setTimeout(() => {
+        wordDiv.textContent = stim.word.toUpperCase();
+        wordDiv.style.color = stim.ink;
+        startTime = performance.now();
+        awaitingResponse = true;
+      }, 500);
+    }
+
+    function submitAnswer(key) {
+      if (!awaitingResponse || !colorKeys[key]) return;
+      awaitingResponse = false;
+
+      const rt = Math.round(performance.now() - startTime);
+      const trial = trials[current];
+      const answer = colorKeys[key];
+      const correct = answer === trial.ink;
+
+      results.push({
+        participantID,
+        trialNum: current + 1,
+        word: trial.word,
+        ink: trial.ink,
+        answer,
+        correct,
+        rt
+      });
+
+      current++;
+      nextTrial();
+    }
+
+    function downloadCSV() {
+      document.getElementById('task').classList.add('hidden');
+      document.getElementById('thanks').classList.remove('hidden');
+
+      const headers = ["participantID","trialNum","word","ink","answer","correct","rt"];
+      const rows = results.map(r => [r.participantID, r.trialNum, r.word, r.ink, r.answer, r.correct, r.rt]);
+      let csv = headers.join(",") + "\n" + rows.map(r => r.join(",")).join("\n");
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `stroop_${participantID}.csv`;
+      a.click();
+    }
+
+    document.addEventListener('keydown', e => {
+      submitAnswer(e.key.toLowerCase());
+    });
+  </script>
+</body>
+</html>
