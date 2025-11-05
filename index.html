@@ -111,7 +111,7 @@
   document.getElementById('thanks').classList.remove('hidden');
 
   // Tag the message so Qualtrics can detect it
-  const jsonData = JSON.stringify({ type: "StroopData", payload: results });
+  const jsonData = JSON.stringify({ type: "stroopData", payload: results });
   window.parent.postMessage(jsonData, "*");
 }
 
