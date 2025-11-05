@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Stroop Task - Local CSV</title>
+  <title>Stroop Task (Qualtrics Integration)</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding-top: 100px; background: #f0f0f0; }
     #word { font-size: 60px; margin-bottom: 40px; }
@@ -27,7 +26,7 @@
 
   <div id="thanks" class="hidden">
     <h2>Thank you!</h2>
-    <p>Your responses have been downloaded as a CSV file.</p>
+    <p>Your responses have been recorded.</p>
   </div>
 
   <script>
@@ -59,9 +58,8 @@
       for (let i = 0; i < n; i++) {
         const word = colors[Math.floor(Math.random() * colors.length)];
         let ink;
-        do {
-          ink = colors[Math.floor(Math.random() * colors.length)];
-        } while (ink === word);
+        do { ink = colors[Math.floor(Math.random() * colors.length)]; }
+        while (ink === word);
         arr.push({ word, ink });
       }
       return arr;
@@ -69,7 +67,7 @@
 
     function nextTrial() {
       if (current >= trials.length) {
-        downloadCSV();
+        sendToQualtrics();
         return;
       }
       const stim = trials[current];
@@ -108,20 +106,13 @@
       nextTrial();
     }
 
-    function downloadCSV() {
+    function sendToQualtrics() {
       document.getElementById('task').classList.add('hidden');
       document.getElementById('thanks').classList.remove('hidden');
 
-      const headers = ["participantID","trialNum","word","ink","answer","correct","rt"];
-      const rows = results.map(r => [r.participantID, r.trialNum, r.word, r.ink, r.answer, r.correct, r.rt]);
-      let csv = headers.join(",") + "\n" + rows.map(r => r.join(",")).join("\n");
-
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `stroop_${participantID}.csv`;
-      a.click();
+      // Send data back to Qualtrics via postMessage
+      const jsonData = JSON.stringify(results);
+      window.parent.postMessage(jsonData, "*");
     }
 
     document.addEventListener('keydown', e => {
